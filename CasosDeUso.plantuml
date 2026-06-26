@@ -1,0 +1,74 @@
+@startuml TRACEX_CasosDeUso
+
+skinparam actorStyle hollow
+skinparam packageStyle rectangle
+
+skinparam usecase {
+  BackgroundColor #EEF5FF
+  BorderColor #3A7BD5
+  ArrowColor #3A7BD5
+}
+skinparam actor {
+  BackgroundColor #D5E8D4 
+  BorderColor #82B366
+}
+
+title Sistema TRACEX — Diagrama de Casos de Uso
+
+' ─── ACTORES ───────────────────────────────────────────
+actor "Cliente / Remitente" as Cliente
+actor "Destinatario"        as Destinatario
+actor "Operador Logístico"  as Operador
+actor "Repartidor"          as Repartidor
+actor "Administrador"       as Admin
+actor "Sistema SMS"         as SMS  <<system>>
+
+' ─── SISTEMA ────────────────────────────────────────────
+rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
+
+  ' --- Gestión de envíos (Cliente) ---
+  usecase "Solicitar envío"                  as UC1
+  usecase "Calcular importe de envío"        as UC1a
+  usecase "Realizar pago"                    as UC1b
+  usecase "Generar código de seguimiento\ny etiqueta" as UC1c
+  usecase "Consultar seguimiento de envío"   as UC2
+
+  ' --- Ciclo logístico (Operador) ---
+  usecase "Registrar evento logístico\n(escaneo de paquete)" as UC3
+
+  ' --- Entrega (Repartidor) ---
+  usecase "Registrar entrega exitosa"        as UC4
+  usecase "Registrar intento fallido"        as UC5
+  usecase "Enviar notificación SMS"          as UC6
+  usecase "Iniciar proceso de devolución"    as UC7
+
+  ' --- Administración ---
+  usecase "Generar informe de jornada"       as UC8
+}
+
+' ─── RELACIONES ACTOR ↔ CASO DE USO ─────────────────────
+Cliente      --> UC1
+Cliente      --> UC2
+
+Destinatario --> UC2
+
+Operador     --> UC3
+
+Repartidor   --> UC4
+Repartidor   --> UC5
+
+Admin        --> UC8
+
+SMS          --> UC6
+
+' ─── RELACIONES ENTRE CASOS DE USO ──────────────────────
+UC1 ..> UC1a : <<include>>
+UC1 ..> UC1b : <<include>>
+UC1 ..> UC1c : <<include>>
+
+UC3 ..> UC2 : <<include>>
+
+UC5 ..> UC6  : <<extend>>
+UC5 ..> UC7  : <<extend>>
+
+@enduml
