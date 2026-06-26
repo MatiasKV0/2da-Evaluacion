@@ -1,0 +1,279 @@
+@startuml TRACEX_DiagramaClases
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #EEF5FF
+  BorderColor #1A56A0
+  ArrowColor #1A56A0
+  FontSize 13
+}
+skinparam stereotypeCBackgroundColor #D5E8D4
+skinparam stereotypeABackgroundColor #FFF0CC
+skinparam package {
+  BackgroundColor #F8FAFF
+  BorderColor #A0B4CC
+}
+
+title TRACEX — Diagrama de Clases
+
+' ═══════════════════════════════════════
+' PAQUETE: Dominio
+' ═══════════════════════════════════════
+package "Dominio" {
+
+  class Cliente {
+    - id : String
+    - nombre : String
+    - email : String
+    - telefono : String
+    - direccion : String
+    + getDatosContacto() : String
+    + getHistorialEnvios() : List<Envio>
+  }
+
+  class Destinatario {
+    - id : String
+    - nombre : String
+    - telefono : String
+    - direccion : String
+    - ciudad : String
+    - provincia : String
+    - codigoPostal : String
+    + getDireccionCompleta() : String
+    + getZonaDestino() : String
+  }
+
+  class Paquete {
+    - peso : float
+    - largo : float
+    - ancho : float
+    - alto : float
+    - descripcionContenido : String
+    + getVolumen() : float
+    + getPeso() : float
+  }
+
+  class Envio {
+    - id : String
+    - codigoSeguimiento : String
+    - tipoServicio : TipoServicio
+    - estado : EstadoEnvio
+    - fechaCreacion : Date
+    - fechaEstimadaEntrega : Date
+    - importeTotal : float
+    - etiquetaPDF : byte[]
+    + getEstado() : EstadoEnvio
+    + actualizarEstado(estado : EstadoEnvio) : void
+    + getCodigoSeguimiento() : String
+    + getEventosLogisticos() : List<EventoLogistico>
+    + getIntentos() : List<IntentoEntrega>
+  }
+
+  class EventoLogistico {
+    - id : String
+    - timestamp : DateTime
+    - ubicacion : String
+    - descripcion : String
+    - tipoEvento : TipoEvento
+    + getDetalle() : String
+    + getTimestamp() : DateTime
+  }
+
+  class IntentoEntrega {
+    - id : String
+    - numeroIntento : int
+    - timestamp : DateTime
+    - resultado : ResultadoEntrega
+    - observaciones : String
+    + esExitoso() : boolean
+    + getNumeroIntento() : int
+  }
+
+  class InformeJornada {
+    - id : String
+    - fecha : Date
+    - totalEntregados : int
+    - totalIntentosFallidos : int
+    - totalEnTransito : int
+    - totalEnDevolucion : int
+    + generarResumen() : String
+  }
+
+  class Administrador {
+    - id : String
+    - nombreUsuario : String
+    - email : String
+    + solicitarInforme(fecha : Date) : InformeJornada
+  }
+
+  class OperadorLogistico {
+    - id : String
+    - nombre : String
+    - puntoLogistico : String
+    + registrarEvento(envio : Envio, tipo : TipoEvento, ubicacion : String) : EventoLogistico
+  }
+
+  class Repartidor {
+    - id : String
+    - nombre : String
+    - zonaAsignada : String
+    + registrarEntrega(envio : Envio) : IntentoEntrega
+    + registrarIntentoFallido(envio : Envio, obs : String) : IntentoEntrega
+  }
+
+  enum TipoServicio {
+    ESTANDAR
+    URGENTE
+  }
+
+  enum EstadoEnvio {
+    REGISTRADO
+    EN_CLASIFICACION
+    EN_TRANSPORTE
+    EN_DISTRIBUCION
+    ENTREGADO
+    INTENTO_FALLIDO
+    EN_DEVOLUCION
+    DEVUELTO
+  }
+
+  enum TipoEvento {
+    CLASIFICACION
+    TRANSPORTE
+    DISTRIBUCION
+    ENTREGA
+    INTENTO_FALLIDO
+  }
+
+  enum ResultadoEntrega {
+    EXITOSA
+    FALLIDA
+  }
+}
+
+' ═══════════════════════════════════════
+' PAQUETE: Controladores (GRASP Controller)
+' ═══════════════════════════════════════
+package "Controladores" <<GRASP Controller>> {
+
+  class SolicitarEnvioController {
+    + solicitarEnvio(datosDestinatario : Map, datosPaquete : Map, tipoServicio : TipoServicio) : Envio
+    + confirmarYPagar(envio : Envio, datosPago : Map) : boolean
+    - validarDatos(datosDestinatario : Map, datosPaquete : Map) : boolean
+  }
+
+  class RegistrarEventoController {
+    + registrarEvento(codigoSeguimiento : String, tipo : TipoEvento, ubicacion : String) : void
+  }
+
+  class RegistrarEntregaController {
+    + registrarEntregaExitosa(codigoSeguimiento : String) : void
+    + registrarIntentoFallido(codigoSeguimiento : String, observaciones : String) : void
+  }
+
+  class GenerarInformeController {
+    + generarInformeJornada(fecha : Date) : InformeJornada
+  }
+}
+
+' ═══════════════════════════════════════
+' PAQUETE: Servicios (Fabricación Pura)
+' ═══════════════════════════════════════
+package "Servicios" <<GRASP Fabricacion Pura>> {
+
+  class CalculadorImporte {
+    - tarifasPorZona : Map<String, float>
+    - tarifasPorTipo : Map<TipoServicio, float>
+    + calcularImporte(paquete : Paquete, tipoServicio : TipoServicio, zonaDestino : String) : float
+    - calcularPorPeso(peso : float) : float
+    - calcularPorVolumen(volumen : float) : float
+    - aplicarRecargoPorTipo(base : float, tipo : TipoServicio) : float
+  }
+
+  class SistemaPago {
+    + procesarPago(datosPago : Map, importe : float) : boolean
+    + revertirPago(transaccionId : String) : boolean
+  }
+
+  class GeneradorSeguimiento {
+    + generarCodigoSeguimiento() : String
+    + generarEtiquetaPDF(envio : Envio) : byte[]
+  }
+
+  class ServicioNotificacionSMS {
+    + notificarIntentoFallido(destinatario : Destinatario, numeroIntento : int) : void
+    + notificarOpcionesReintento(destinatario : Destinatario) : void
+  }
+
+  class GestorDevoluciones {
+    + iniciarDevolucion(envio : Envio) : void
+    + verificarCondicionDevolucion(envio : Envio) : boolean
+  }
+
+  class GeneradorInforme {
+    + generarInformeJornada(fecha : Date, envios : List<Envio>) : InformeJornada
+  }
+}
+
+' ═══════════════════════════════════════
+' RELACIONES DE DOMINIO
+' ═══════════════════════════════════════
+
+' Composición: Envio contiene Paquete y Destinatario (no existen sin el envío)
+Envio *-- "1" Paquete        : contiene >
+Envio *-- "1" Destinatario   : tiene >
+
+' Composición: Envio contiene sus eventos e intentos
+Envio *-- "0..*" EventoLogistico  : registra >
+Envio *-- "0..*" IntentoEntrega   : registra >
+
+' Agregación: Cliente tiene envíos pero existe independientemente
+Cliente "1" o-- "0..*" Envio : solicita >
+
+' Asociación: InformeJornada agrupa envíos
+InformeJornada "1" o-- "0..*" Envio : incluye >
+
+' Asociaciones simples entre actores y entidades de dominio
+OperadorLogistico "1" --> "0..*" EventoLogistico  : crea >
+Repartidor        "1" --> "0..*" IntentoEntrega   : registra >
+Administrador     "1" --> "0..*" InformeJornada   : solicita >
+
+' Uso de enumeraciones
+Envio     ..> TipoServicio    : usa
+Envio     ..> EstadoEnvio     : usa
+EventoLogistico ..> TipoEvento       : usa
+IntentoEntrega  ..> ResultadoEntrega : usa
+
+' ═══════════════════════════════════════
+' RELACIONES CONTROLADORES → DOMINIO/SERVICIOS
+' ═══════════════════════════════════════
+
+' GRASP Controlador coordina Fabricaciones Puras y crea Envio (Creador)
+SolicitarEnvioController ..> CalculadorImporte      : usa >
+SolicitarEnvioController ..> SistemaPago            : usa >
+SolicitarEnvioController ..> GeneradorSeguimiento   : usa >
+SolicitarEnvioController ..> Envio                  : <<crea>> >
+SolicitarEnvioController ..> Destinatario           : <<crea>> >
+SolicitarEnvioController ..> Paquete                : <<crea>> >
+
+RegistrarEventoController   ..> Envio                   : usa >
+RegistrarEventoController   ..> OperadorLogistico        : usa >
+RegistrarEventoController   ..> EventoLogistico          : <<crea>> >
+
+RegistrarEntregaController  ..> Envio                   : usa >
+RegistrarEntregaController  ..> Repartidor               : usa >
+RegistrarEntregaController  ..> IntentoEntrega           : <<crea>> >
+RegistrarEntregaController  ..> ServicioNotificacionSMS  : usa >
+RegistrarEntregaController  ..> GestorDevoluciones       : usa >
+
+GenerarInformeController    ..> GeneradorInforme         : usa >
+GenerarInformeController    ..> Administrador            : usa >
+GenerarInformeController    ..> InformeJornada           : <<crea>> >
+
+' Fabricación Pura → Dominio
+ServicioNotificacionSMS ..> Destinatario : usa >
+GestorDevoluciones      ..> Envio        : usa >
+GeneradorInforme        ..> Envio        : usa >
+GeneradorSeguimiento    ..> Envio        : usa >
+
+@enduml
