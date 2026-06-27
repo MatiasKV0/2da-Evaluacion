@@ -430,29 +430,6 @@
       .step-panel.active {
         display: block;
       }
-
-      /* ── HEURISTICAS NOTE ── */
-      .heuristic-note {
-        background: #fffbf0;
-        border: 1px solid #f0d080;
-        border-radius: var(--radius);
-        padding: 14px 18px;
-        font-size: 12px;
-        color: #5a4000;
-        margin-top: 8px;
-      }
-      .heuristic-note strong {
-        display: block;
-        margin-bottom: 4px;
-        font-size: 13px;
-      }
-      .heuristic-note ul {
-        padding-left: 16px;
-        margin-top: 6px;
-      }
-      .heuristic-note li {
-        margin-bottom: 4px;
-      }
     </style>
   </head>
   <body>
@@ -547,17 +524,6 @@
               >
             </div>
           </div>
-        </div>
-
-        <!-- Heurística 1 -->
-        <div class="heuristic-note">
-          <strong
-            >🔍 Heurística Nielsen aplicada #1 — Prevención de errores</strong
-          >
-          Los campos obligatorios están marcados con <strong>*</strong> y el
-          sistema valida el formato en tiempo real antes de permitir avanzar
-          (ej: teléfono con letras). Esto evita que el usuario llegue al final
-          del proceso con datos incorrectos, reduciendo frustración y retrabajo.
         </div>
 
         <div class="actions">
@@ -734,19 +700,6 @@
             ⚠ El pago no pudo procesarse. Verificá los datos de la tarjeta o
             intentá con otro método de pago.
           </div>
-        </div>
-
-        <!-- Heurística 2 -->
-        <div class="heuristic-note">
-          <strong
-            >🔍 Heurística Nielsen aplicada #2 — Visibilidad del estado del
-            sistema</strong
-          >
-          El importe se calcula y muestra automáticamente antes de pedir los
-          datos de pago. El stepper en la parte superior mantiene siempre
-          visible en qué paso se encuentra el usuario y cuántos pasos faltan.
-          Los mensajes de error de pago son inmediatos y específicos, informando
-          exactamente qué falló y qué hacer.
         </div>
 
         <div class="actions">
