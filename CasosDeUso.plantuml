@@ -13,15 +13,15 @@ skinparam actor {
   BorderColor #82B366
 }
 
-title Sistema TRACEX — Diagrama de Casos de Uso
+title Diagrama de Casos de Uso
 
 ' ─── ACTORES ───────────────────────────────────────────
 actor "Cliente / Remitente" as Cliente
 actor "Destinatario"        as Destinatario
 actor "Operador Logístico"  as Operador
 actor "Repartidor"          as Repartidor
-actor "Administrador"       as Admin
-actor "Sistema SMS"         as SMS  <<system>>
+actor "Supervisor"          as Supervisor
+actor "Timer"       as Timer
 
 ' ─── SISTEMA ────────────────────────────────────────────
 rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
@@ -30,45 +30,46 @@ rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
   usecase "Solicitar envío"                  as UC1
   usecase "Calcular importe de envío"        as UC1a
   usecase "Realizar pago"                    as UC1b
-  usecase "Generar código de seguimiento\ny etiqueta" as UC1c
   usecase "Consultar seguimiento de envío"   as UC2
 
   ' --- Ciclo logístico (Operador) ---
   usecase "Registrar evento logístico\n(escaneo de paquete)" as UC3
+  usecase "Recepcionar paquete" as UC3a
 
   ' --- Entrega (Repartidor) ---
-  usecase "Registrar entrega exitosa"        as UC4
+  usecase "Registrar entrega"        as UC4
   usecase "Registrar intento fallido"        as UC5
-  usecase "Enviar notificación SMS"          as UC6
   usecase "Iniciar proceso de devolución"    as UC7
 
   ' --- Administración ---
   usecase "Generar informe de jornada"       as UC8
+  usecase "Habilitar empleado" as UC9
 }
 
 ' ─── RELACIONES ACTOR ↔ CASO DE USO ─────────────────────
-Cliente      --> UC1
+Supervisor   --|> Operador
+Supervisor   --> UC9
+
 Cliente      --> UC2
 
 Destinatario --> UC2
 
 Operador     --> UC3
+Operador     --> UC3a
+Operador     --> UC1
 
 Repartidor   --> UC4
 Repartidor   --> UC5
 
-Admin        --> UC8
+Timer        --> UC8
 
-SMS          --> UC6
 
 ' ─── RELACIONES ENTRE CASOS DE USO ──────────────────────
 UC1 ..> UC1a : <<include>>
 UC1 ..> UC1b : <<include>>
-UC1 ..> UC1c : <<include>>
 
 UC3 ..> UC2 : <<include>>
 
-UC5 ..> UC6  : <<extend>>
-UC5 ..> UC7  : <<extend>>
+UC5 <.. UC7  : <<extend>>
 
 @enduml
