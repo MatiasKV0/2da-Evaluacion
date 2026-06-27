@@ -52,17 +52,32 @@ package Negocio{
     - monto: Double
     - fechaPago: LocalDateTime
     - verificado: Boolean
-    + procesarPago(): Boolean
   }
 
-  class Empleado {
-    - id: Long
+  abstract class Empleado {
     - legajo: String
     - nombre: String
-    - rol: TipoEmpleado
     - zonaAsignada: String
+    + getDatosOperativos(): String
     + esRolPermitido(rolRequerido: TipoEmpleado): Boolean
   }
+
+  class OperadorSucursal {
+    + solicitarEnvio(): void
+    + registrarRecepcion(): void
+  }
+
+  class Repartidor {
+    - vehiculoAsignado: String
+    + registrarEntrega(): void
+  }
+
+  class Supervisor {
+    + habilitarEmpleado(String legajo): void
+    + auditarEnvio(): void
+  }
+
+
 
   class Sucursal {
     - id: Long
@@ -88,6 +103,10 @@ package Negocio{
 }
 
 EventoLogistico <|-- IntentoEntrega
+Empleado <|-- OperadorSucursal
+Empleado <|-- Repartidor
+Empleado <|-- Supervisor
+
 
 ' --- CAPA DE CONTROLADORES (Interfaces externas / API) ---
 package Controladores {
@@ -102,6 +121,9 @@ package Controladores {
 
   class ReporteController {
     + generarInformeDiario(fecha: LocalDate): void
+  }
+  class PagoController {
+    + procesarPago(monto: double, codigoSeguimiento: String, datosPago: JSON): bool
   }
 }
 
@@ -126,15 +148,12 @@ package Gestores {
   class GestorReportes {
     + generarCierreJornada(fecha: LocalDate): Reporte
   }
+  class GestorPago {
+    + void registrarPago(pago: Pago): bool
+  }
 }
 
 ' --- ENUMS E INTERFACES ---
-enum TipoEmpleado {
-  OPERADOR
-  REPARTIDOR
-  SUPERVISOR
-}
-
 enum TipoServicio {
   ESTANDAR
   URGENTE
@@ -155,7 +174,8 @@ enum EstadoEnvio {
 OperacionController ..> GestorEnvio
 LogisticaController ..> GestorDistribucion
 ReporteController ..> GestorReportes
-
+PagoController ..> GestorPago
+GestorPago ..> Pago
 GestorEnvio ..> Envio
 GestorEnvio ..> Cliente
 GestorDistribucion ..> Envio
