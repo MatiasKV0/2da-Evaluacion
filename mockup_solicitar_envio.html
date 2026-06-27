@@ -433,7 +433,6 @@
     </style>
   </head>
   <body>
-    <!-- HEADER -->
     <header>
       <div class="logo">TRACE<span>X</span></div>
       <div class="header-user">
@@ -449,28 +448,30 @@
         envío.
       </p>
 
-      <!-- STEPPER -->
       <div class="stepper" id="stepper">
         <div class="step active" id="s1">
           <div class="step-circle">1</div>
-          <span class="step-label">Destinatario</span>
+          <span class="step-label">Remitente</span>
         </div>
         <div class="step" id="s2">
           <div class="step-circle">2</div>
-          <span class="step-label">Paquete</span>
+          <span class="step-label">Destinatario</span>
         </div>
         <div class="step" id="s3">
           <div class="step-circle">3</div>
+          <span class="step-label">Paquete</span>
+        </div>
+        <div class="step" id="s4">
+          <div class="step-circle">4</div>
           <span class="step-label">Pago y confirmación</span>
         </div>
       </div>
 
-      <!-- ═══ PASO 1: DESTINATARIO ═══ -->
       <div class="step-panel active" id="panel1">
         <div class="card">
           <div class="card-title">
             <div class="icon">👤</div>
-            Datos del destinatario
+            Datos del remitente
           </div>
           <div class="form-grid">
             <div class="field">
@@ -519,8 +520,7 @@
                 <option>Mendoza</option>
               </select>
               <span class="field-hint"
-                >La zona de destino se determina automáticamente a partir de
-                estos datos.</span
+                >La zona de origen se determina automáticamente.</span
               >
             </div>
           </div>
@@ -531,13 +531,74 @@
             ✕ Cancelar
           </button>
           <button class="btn btn-primary" onclick="goTo(2)">
-            Siguiente: Datos del paquete →
+            Siguiente: Destinatario →
           </button>
         </div>
       </div>
 
-      <!-- ═══ PASO 2: PAQUETE ═══ -->
       <div class="step-panel" id="panel2">
+        <div class="card">
+          <div class="card-title">
+            <div class="icon">👤</div>
+            Datos del destinatario
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Nombre <span class="req">*</span></label>
+              <input type="text" placeholder="Ej: Juan" />
+            </div>
+            <div class="field">
+              <label>Apellido <span class="req">*</span></label>
+              <input type="text" placeholder="Ej: Pérez" />
+            </div>
+            <div class="field">
+              <label>Teléfono <span class="req">*</span></label>
+              <input type="text" placeholder="Ej: +54 11 9876-5432" />
+            </div>
+            <div class="field">
+              <label>DNI <span class="req">*</span></label>
+              <input type="text" placeholder="Ej: 25.341.990" />
+            </div>
+            <div class="field full">
+              <label>Dirección <span class="req">*</span></label>
+              <input type="text" placeholder="Calle, número, piso/depto" />
+            </div>
+            <div class="field">
+              <label>Ciudad <span class="req">*</span></label>
+              <input type="text" placeholder="Ej: Rosario" />
+            </div>
+            <div class="field">
+              <label>Código postal <span class="req">*</span></label>
+              <input type="text" placeholder="Ej: 2000" />
+            </div>
+            <div class="field full">
+              <label>Provincia / Estado <span class="req">*</span></label>
+              <select>
+                <option value="">Seleccioná una provincia…</option>
+                <option>Buenos Aires</option>
+                <option>CABA</option>
+                <option>Córdoba</option>
+                <option selected>Santa Fe</option>
+                <option>Mendoza</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-ghost" onclick="goTo(1)">← Volver</button>
+          <div style="display: flex; gap: 10px">
+            <button class="btn btn-danger" onclick="cancelar()">
+              ✕ Cancelar
+            </button>
+            <button class="btn btn-primary" onclick="goTo(3)">
+              Siguiente: Datos del paquete →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-panel" id="panel3">
         <div class="card">
           <div class="card-title">
             <div class="icon">📦</div>
@@ -598,21 +659,19 @@
         </div>
 
         <div class="actions">
-          <button class="btn btn-ghost" onclick="goTo(1)">← Volver</button>
+          <button class="btn btn-ghost" onclick="goTo(2)">← Volver</button>
           <div style="display: flex; gap: 10px">
             <button class="btn btn-danger" onclick="cancelar()">
               ✕ Cancelar
             </button>
-            <button class="btn btn-primary" onclick="goTo(3)">
+            <button class="btn btn-primary" onclick="goTo(4)">
               Siguiente: Pago y confirmación →
             </button>
           </div>
         </div>
       </div>
 
-      <!-- ═══ PASO 3: PAGO Y CONFIRMACIÓN ═══ -->
-      <div class="step-panel" id="panel3">
-        <!-- Resumen del envío -->
+      <div class="step-panel" id="panel4">
         <div class="card">
           <div class="card-title">
             <div class="icon">📋</div>
@@ -621,15 +680,15 @@
           <table class="summary-table">
             <tr>
               <td>Destinatario</td>
-              <td>María López</td>
+              <td>Juan Pérez</td>
             </tr>
             <tr>
               <td>DNI</td>
-              <td>31.912.180</td>
+              <td>25.341.990</td>
             </tr>
             <tr>
               <td>Teléfono</td>
-              <td>+54 11 1234-5678</td>
+              <td>+54 11 9876-5432</td>
             </tr>
             <tr>
               <td>Dirección</td>
@@ -654,7 +713,6 @@
           </table>
         </div>
 
-        <!-- Importe calculado -->
         <div class="importe-box">
           <div>
             <div class="importe-label">Importe total calculado</div>
@@ -665,7 +723,6 @@
           <div class="importe-valor">$ 3.850,00</div>
         </div>
 
-        <!-- Pago -->
         <div class="card">
           <div class="card-title">
             <div class="icon">💳</div>
@@ -695,7 +752,6 @@
             </div>
           </div>
 
-          <!-- FA3: Pago rechazado (ejemplo de estado de error) -->
           <div class="alert error" style="margin-top: 14px">
             ⚠ El pago no pudo procesarse. Verificá los datos de la tarjeta o
             intentá con otro método de pago.
@@ -703,12 +759,17 @@
         </div>
 
         <div class="actions">
-          <button class="btn btn-ghost" onclick="goTo(2)">← Volver</button>
+          <button class="btn btn-ghost" onclick="goTo(3)">← Volver</button>
           <div style="display: flex; gap: 10px">
             <button class="btn btn-danger" onclick="cancelar()">
               ✕ Cancelar
             </button>
-            <button class="btn btn-primary">✓ Confirmar y pagar</button>
+            <button
+              class="btn btn-primary"
+              onclick="alert('¡Envío procesado con éxito!')"
+            >
+              ✓ Confirmar y pagar
+            </button>
           </div>
         </div>
       </div>
@@ -716,21 +777,34 @@
 
     <script>
       function goTo(step) {
-        // Ocultar todos los paneles
-        document
-          .querySelectorAll(".step-panel")
-          .forEach((p) => p.classList.remove("active"));
+        // 1. Ocultar absolutamente todos los paneles
+        document.querySelectorAll(".step-panel").forEach((p) => {
+          p.classList.remove("active");
+        });
+
+        // 2. Limpiar estados del Stepper superior
         document.querySelectorAll(".step").forEach((s) => {
           s.classList.remove("active", "done");
         });
 
-        // Activar panel y stepper
-        document.getElementById("panel" + step).classList.add("active");
-        for (let i = 1; i <= 3; i++) {
-          const s = document.getElementById("s" + i);
-          if (i < step) s.classList.add("done");
-          else if (i === step) s.classList.add("active");
+        // 3. Mostrar el panel solicitado
+        const targetPanel = document.getElementById("panel" + step);
+        if (targetPanel) {
+          targetPanel.classList.add("active");
         }
+
+        // 4. Actualizar las bolitas de progreso (Ahora evalúa del 1 al 4)
+        for (let i = 1; i <= 4; i++) {
+          const s = document.getElementById("s" + i);
+          if (s) {
+            if (i < step) {
+              s.classList.add("done");
+            } else if (i === step) {
+              s.classList.add("active");
+            }
+          }
+        }
+
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
@@ -745,7 +819,7 @@
         }
       }
 
-      // Radio buttons tipo servicio
+      // Radio buttons para el tipo de servicio
       document.querySelectorAll(".radio-option").forEach((opt) => {
         opt.addEventListener("click", () => {
           document
@@ -755,7 +829,7 @@
         });
       });
 
-      // Método de pago
+      // Botones de método de pago
       document.querySelectorAll(".metodo-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           document
