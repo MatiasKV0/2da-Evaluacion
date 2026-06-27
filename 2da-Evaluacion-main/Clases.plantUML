@@ -120,7 +120,7 @@ package Gestores {
     + void procesarIntentoFallido(codigo: String, legajo: String, motivo: String)
     - void verificarReglasDevolucion(envio: Envio, intento: IntentoEntrega)
   }
-
+'--Comentario'
   class GestorNotificacion {
     + void enviarSMS(telefono: String, mensaje: String)
   }
