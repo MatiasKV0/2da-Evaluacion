@@ -64,6 +64,13 @@ class Pago {
     - verificado: Boolean
 }
 
+class Zona {
+    - id: Long
+    - nombre: String
+    - codigoPostal: String
+    - costoEnvio: Double
+}
+
 class Empleado {
     - id: Long
     - legajo: String
@@ -105,6 +112,7 @@ Envio "0..*" --> "1" Cliente : destinatario
 ' El envío se compone de un paquete y registra un pago
 Envio "1" *-- "1" Paquete
 Envio "1" <-- "0..1" Pago
+Envio "1..*" -- "1" Zona : corresponde
 
 ' El envío acumula el historial de eventos logísticos
 Envio "1" *-- "0..*" EventoLogistico

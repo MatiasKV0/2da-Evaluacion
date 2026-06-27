@@ -28,7 +28,6 @@ rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
 
   ' --- Gestión de envíos (Cliente) ---
   usecase "Solicitar envío"                  as UC1
-  usecase "Calcular importe de envío"        as UC1a
   usecase "Realizar pago"                    as UC1b
   usecase "Consultar seguimiento de envío"   as UC2
 
@@ -65,7 +64,6 @@ Timer        --> UC8
 
 
 ' ─── RELACIONES ENTRE CASOS DE USO ──────────────────────
-UC1 ..> UC1a : <<include>>
 UC1 ..> UC1b : <<include>>
 
 UC3 ..> UC2 : <<include>>
