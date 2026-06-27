@@ -1,0 +1,166 @@
+@startuml TRACEX_Secuencia_SolicitarEnvio
+
+skinparam sequence {
+  ArrowColor #1A56A0
+  ParticipantBorderColor #1A56A0
+  ParticipantBackgroundColor #EEF5FF
+  ParticipantFontSize 13
+  LifeLineBorderColor #A0B4CC
+  BoxBackgroundColor #F8FAFF
+  BoxBorderColor #D1DCE8
+}
+skinparam NoteBorderColor #F0D080
+skinparam NoteBackgroundColor #FFFBF0
+
+title TRACEX — Diagrama de Secuencia: Solicitar Envío (Flujo Principal)
+
+box "Controladores" #EBF2FC
+  participant "OperacionController" as Ctrl
+  participant "PagoController"      as PagoCtrl
+end box
+
+box "Gestores" #EEF8EE
+  participant "GestorEnvio"         as GEnvio
+  participant "GestorPago"          as GPago
+end box
+
+box "Negocio" #FFF8EE
+  participant "Cliente"             as ClienteObj
+  participant "Paquete"             as PaqueteObj
+  participant "Zona"                as ZonaObj
+  participant "Envio"               as EnvioObj
+  participant "Pago"                as PagoObj
+end box
+
+== Paso 1: Solicitud de nuevo envío ==
+
+[-> Ctrl : registrarNuevoEnvio(\n  datosRemitente: JSON,\n  datosDestinatario: JSON,\n  datosPaquete: JSON,\n  tipoServicio: TipoServicio)
+activate Ctrl
+
+Ctrl -> GEnvio : crearEnvio(\n  datosRemitente,\n  datosDestinatario,\n  datosPaquete,\n  tipoServicio)
+activate GEnvio
+
+note right of GEnvio
+  **GRASP Controlador**
+  OperacionController recibe el
+  evento del sistema y delega
+  al GestorEnvio (Fabricación Pura)
+  la coordinación del caso de uso.
+end note
+
+== Paso 2: Creación de objetos de dominio ==
+
+GEnvio -> ClienteObj ** : new Cliente(datosRemitente)
+activate ClienteObj
+note right of ClienteObj
+  **GRASP Creador**
+  GestorEnvio crea las instancias
+  de Cliente (remitente y destinatario)
+  y Paquete porque los registra
+  y utiliza directamente.
+end note
+ClienteObj --> GEnvio : remitente
+
+GEnvio -> ClienteObj ** : new Cliente(datosDestinatario)
+ClienteObj --> GEnvio : destinatario
+
+GEnvio -> PaqueteObj ** : new Paquete(\n  peso, alto, ancho, largo,\n  descripcionContenido)
+activate PaqueteObj
+PaqueteObj --> GEnvio : paquete
+
+== Paso 3: Determinación de zona y cálculo de importe ==
+
+GEnvio -> ZonaObj : determinarZona(codigoPostal)
+activate ZonaObj
+note right of ZonaObj
+  **GRASP Experto**
+  Zona conoce su propio código
+  postal y costo de envío, por lo
+  que es el experto natural para
+  determinar la zona y su tarifa.
+end note
+ZonaObj --> GEnvio : zona
+
+== Paso 4: Creación del Envío ==
+
+GEnvio -> EnvioObj ** : new Envio(\n  remitente, destinatario,\n  paquete, tipoServicio)
+activate EnvioObj
+note right of EnvioObj
+  **GRASP Creador**
+  GestorEnvio crea Envio porque
+  registra y agrega todos sus
+  componentes (remitente,
+  destinatario, paquete).
+end note
+
+GEnvio -> EnvioObj : calcularImporte(zona)
+note right of EnvioObj
+  **GRASP Experto**
+  Envio conoce su propio paquete,
+  tipo de servicio y zona, por lo
+  que calcula su propio importe.
+end note
+EnvioObj --> GEnvio : importeCalculado
+
+GEnvio -> EnvioObj : generarCodigoSeguimiento()
+EnvioObj --> GEnvio : codigoSeguimiento
+
+GEnvio --> Ctrl : resumen(codigoSeguimiento, importeCalculado)
+
+== Paso 5: Confirmación y procesamiento del pago ==
+
+[-> PagoCtrl : procesarPago(\n  monto, codigoSeguimiento,\n  datosPago: JSON)
+activate PagoCtrl
+
+PagoCtrl -> GPago : registrarPago(pago)
+activate GPago
+note right of GPago
+  **GRASP Fabricación Pura**
+  GestorPago encapsula la lógica
+  de integración con el sistema
+  externo de pago, manteniendo
+  bajo acoplamiento con el dominio.
+end note
+
+GPago -> PagoObj ** : new Pago(monto, datosPago)
+activate PagoObj
+GPago -> PagoObj : procesarPago()
+note right of PagoObj
+  **GRASP Experto**
+  Pago conoce sus propios datos
+  y es responsable de ejecutar
+  y verificar su propia transacción.
+end note
+PagoObj --> GPago : verificado = true
+
+GPago --> PagoCtrl : pagoConfirmado
+deactivate GPago
+deactivate PagoCtrl
+
+== Paso 6: Confirmación del pago en el Envío y emisión de etiqueta ==
+
+Ctrl -> GEnvio : confirmarPago(codigoSeguimiento, pago)
+
+GEnvio -> EnvioObj : confirmarPago(pago)
+EnvioObj --> GEnvio : estadoActual = EN_CLASIFICACION
+
+GEnvio -> GEnvio : emitirEtiqueta(envio)
+note right of GEnvio
+  **GRASP Fabricación Pura**
+  GestorEnvio centraliza la
+  emisión de la etiqueta como
+  responsabilidad de servicio,
+  manteniendo alta cohesión.
+end note
+
+GEnvio --> Ctrl : envioRegistrado(\n  codigoSeguimiento, etiquetaPDF)
+deactivate EnvioObj
+deactivate PaqueteObj
+deactivate ClienteObj
+deactivate ZonaObj
+deactivate GEnvio
+
+[<-- Ctrl : confirmacion(\n  codigoSeguimiento, etiquetaPDF)
+deactivate Ctrl
+
+@enduml
