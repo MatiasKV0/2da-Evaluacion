@@ -1,0 +1,131 @@
+@startuml   
+title CU01 - Solicitar Envío
+skinparam Shadowing false 
+skinparam sequenceMessageAlign center 
+skinparam responseMessageBelowArrow true
+skinparam NoteBackgroundColor #FFF2CC
+
+participant "Operador Sucursal" as Operador
+participant "OperacionController" as OC 
+participant "PagoController" as PC
+participant "GestorEnvio" as GE 
+participant "GestorPago" as GP
+
+' MULTIOBJETOS 
+collections "zonas : Zona" as RepoZonas
+collections "envios : Envio" as RepoEnvios
+collections "pagos : Pago" as RepoPagos
+
+participant "Tarifa" as Tarifa 
+participant "E1:Envio" as Envio 
+participant "P1:Pago" as Pago
+participant "<<interface>>\nIProcesadorDePago" as IPago 
+participant "GeneradorDePDF" as GeneradorPDF
+
+== Registro del envío ==
+Operador -> OC : registrarNuevoEnvio(\nremitente, destinatario,\npaquete, tipoServicio, idZona)
+activate OC
+
+' VALIDACIONES Y NOTAS DE FLUJOS ALTERNATIVOS
+OC -> OC : validarDatos(remitente, destinatario)
+note right of OC
+  **[Flujos Alternativos A1 y A2]**
+  Si los datos del destinatario o remitente
+  son inválidos o están incompletos, el
+  sistema muestra error y se detiene el flujo.
+end note
+
+OC -> OC : validarPaquete(paquete)
+note right of OC
+  **[Flujo Alternativo A3]**
+  Si el peso o las dimensiones están fuera
+  del rango permitido, se detiene el flujo.
+end note
+
+OC -> GE : crearEnvio(remitente, destinatario, paquete, tipoServicio, idZona)
+activate GE
+
+GE -> RepoZonas : buscarZona(idZona)
+activate RepoZonas
+RepoZonas --> GE : zona : Zona
+deactivate RepoZonas
+
+GE -> Tarifa : calcularImporte(paquete, tipoServicio, zona)
+activate Tarifa
+Tarifa --> GE : importe
+deactivate Tarifa
+
+create Envio
+GE -> Envio : Envio(remitente, destinatario, paquete, tipoServicio)
+activate Envio
+GE -> Envio : asignarImporte(importe)
+Envio --> GE : envioCreado
+deactivate Envio
+
+' GUARDADO DEL ENVÍO 
+GE -> RepoEnvios : agregarEnvio(Envio)
+activate RepoEnvios
+deactivate RepoEnvios
+
+GE --> OC : envio, importe
+deactivate GE
+
+OC --> Operador : mostrarResumen(envio, importe)
+deactivate OC
+
+== Confirmación del envío (Incluye CU: Procesar Pago) ==
+' EL ACTOR AHORA INTERACTÚA CON EL CONTROLADOR DE PAGOS
+Operador -> PC : registrarPago(importe)
+activate PC
+
+PC -> GP : registrarPago(importe)
+activate GP
+
+create Pago
+GP -> Pago : crear(importe)
+activate Pago
+Pago --> GP : pago
+deactivate Pago
+
+' GUARDADO DEL PAGO 
+GP -> RepoPagos : agregarPago(Pago)
+activate RepoPagos
+deactivate RepoPagos
+
+' APLICANDO POLIMORFISMO Y VARIACIONES PROTEGIDAS
+GP -> IPago : procesarPago(importe)
+activate IPago
+IPago --> GP : pagoAprobado
+deactivate IPago
+
+note right of GP
+  **[Flujo Alternativo A4]**
+  Si la interfaz del sistema externo rechaza
+  la transacción, se notifica al usuario para 
+  reintentar con otro medio o cancelar.
+end note
+
+GP -> Envio : confirmarPago(pago)
+activate Envio
+Envio -> Envio : generarCodigoSeguimiento()
+Envio --> GP : codigoSeguimiento
+deactivate Envio
+
+' EMISIÓN DE ETIQUETA APLICANDO FABRICACIÓN PURA
+GP -> GE : emitirEtiqueta(envio)
+activate GE
+
+GE -> GeneradorPDF : crearPDF(envio)
+activate GeneradorPDF
+GeneradorPDF --> GE : etiquetaPDF
+deactivate GeneradorPDF
+
+GE --> GP : etiquetaPDF
+deactivate GE
+
+GP --> PC : codigoSeguimiento, etiquetaPDF
+deactivate GP
+
+PC --> Operador : mostrarInfo(codigoSeguimiento, etiquetaPDF)
+deactivate PC
+@enduml
