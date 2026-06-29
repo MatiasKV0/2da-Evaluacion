@@ -1,4 +1,4 @@
-@startuml
+@startuml   
 scale max 2000 width
 skinparam classAttributeIconSize 0
 skinparam style strictuml
@@ -99,15 +99,15 @@ class Transferencia{
   }
 
   class Repartidor {
-    - vehiculoAsignado: String???
-    + registrarEntrega(): void???
+    - vehiculoAsignado: String
+    + registrarEntrega(): void
     + entregarPaquete() : boolean
     + registrarIntentoFallido() : void
    }
 
   class Supervisor {
-    + habilitarEmpleado(String legajo): void??
-    + auditarEnvio(): void???
+    + habilitarEmpleado(String legajo): void
+    + auditarEnvio(codigoSeguimiento: String): void
 + generarReporte() : void 
   }
 
@@ -167,8 +167,7 @@ class Transferencia{
     + determinarProximaAccion(): String
   }
     class GeneradorPdf {
-
-    + etiquetaPdf crearPDF(envio : Envio) 
+    + crearPDF(envio: Envio): void.
   }
 
 }
@@ -190,6 +189,7 @@ package Controladores {
     + registrarNuevoEnvio(datosRemitente: JSON, datosDestinatario: JSON, datosPaquete: JSON, tipoServicio: TipoServicio , zona: JSON): String
     + valorDatos(remitente,destinatario) : boolean
     + validarPaquete(paquete) : boolean
+    + generarEtiquetas(envio: Envio): void
   }
 
   class LogisticaController {
@@ -231,7 +231,6 @@ package Gestores {
   }
   class GestorPago {
     + void registrarPago(importe : double): bool
-    + void etiquetaPDF()
   }
   
 }
