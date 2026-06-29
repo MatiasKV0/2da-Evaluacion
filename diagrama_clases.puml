@@ -6,10 +6,10 @@ skinparam DefaultFontName "Arial"
 hide empty members
 
 package Negocio{
-  interface Suscripcion {
+  ' interface Suscripcion {
 
-    + esPrioritario(): Boolean
-  }
+  '   + esPrioritario(): Boolean
+  ' }
 
   ' --- ENTIDADES DE DOMINIO (Lógica y Estado) ---
   class Cliente {
@@ -166,6 +166,12 @@ class Transferencia{
     + IntentoEntrega(motivo: String, empleado: Empleado, intento: Integer)
     + determinarProximaAccion(): String
   }
+    class GeneradorPdf() {
+    + bool procesarPago(monto: Double)
+    + void registrarPago(importe : Double) 
+    + void crearPDF(envio : Envio) 
+  }
+
 }
 
 EventoLogistico <|-- IntentoEntrega
@@ -200,11 +206,6 @@ package Controladores {
     + registrarPago(importe : Double) : void
   }
 
-  class GeneradorPdf() {
-    + procesarPago(monto: Double): bool
-    + registrarPago(importe : Double) : void
-    + crearPDF(envio : Envio) : void
-  }
 
 }
 
@@ -261,6 +262,8 @@ GestorEnvio .down.> Cliente
 GestorDistribucion .down.> Envio
 GestorDistribucion .down.> Empleado
 
+
+
 ' 3. Usamos direcciones laterales (derecha/izquierda) para servicios transversales
 GestorDistribucion .right.> ServicioDeNotificacion : usa para SMS >
 GestorReportes .down.> Reportes
@@ -282,7 +285,8 @@ Tarifa "*" .down.> "1" Zona : aplica >
 Tarifa "*" .down.> "1" TipoServicio : aplica >
 Tarifa "1" .down.> "1" Paquete : aplica >
 
-SuscripcionMensual "0" -up-> "1" Cliente : perteneceA >
+
+' SuscripcionMensual "0" -up-> "1" Cliente : perteneceA >
 
 EventoLogistico "*" --> "1" Empleado : registradoPor >
 EventoLogistico "*" --> "1" Sucursal : ocurreEn >
