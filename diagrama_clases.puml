@@ -64,7 +64,7 @@ package Negocio{
     + agregarPago(pago : Pago)
   }
   
-  interface MedioPago{
+  interface IProcesadorDePago{
     +procesarPago(importe : double) : Boolean
 }
 
@@ -166,10 +166,9 @@ class Transferencia{
     + IntentoEntrega(motivo: String, empleado: Empleado, intento: Integer)
     + determinarProximaAccion(): String
   }
-    class GeneradorPdf() {
-    + bool procesarPago(monto: Double)
-    + void registrarPago(importe : Double) 
-    + void crearPDF(envio : Envio) 
+    class GeneradorPdf {
+
+    + etiquetaPdf crearPDF(envio : Envio) 
   }
 
 }
@@ -178,9 +177,10 @@ EventoLogistico <|-- IntentoEntrega
 Empleado <|-- OperadorSucursal
 Empleado <|-- Repartidor
 Empleado <|-- Supervisor
-Pago --> MedioPago : utiliza
-TarjetaCredito ..|> MedioPago
-Transferencia ..|> MedioPago
+Pago --> IProcesadorDePago : utiliza
+TarjetaCredito ..|> IProcesadorDePago
+Transferencia ..|> IProcesadorDePago
+
 
 
 
@@ -261,6 +261,7 @@ GestorEnvio .down.> Envio
 GestorEnvio .down.> Cliente
 GestorDistribucion .down.> Envio
 GestorDistribucion .down.> Empleado
+GestorEnvio .down.> GeneradorPdf
 
 
 
