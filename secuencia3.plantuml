@@ -73,7 +73,7 @@ deactivate GE
 OC --> Operador : mostrarResumen(envio, importe)
 deactivate OC
 
-== Confirmación del envío (Incluye CU: Procesar Pago) ==
+== Confirmación del pago (Incluye CU: Procesar Pago) ==
 ' EL ACTOR AHORA INTERACTÚA CON EL CONTROLADOR DE PAGOS
 Operador -> PC : registrarPago(importe)
 activate PC
@@ -105,27 +105,44 @@ note right of GP
   reintentar con otro medio o cancelar.
 end note
 
-GP -> Envio : confirmarPago(pago)
+' EL GESTOR DE PAGO TERMINA SU RESPONSABILIDAD 
+GP --> PC : pagoAprobado
+deactivate GP
+
+PC --> Operador : confirmacionPagoExitoso
+deactivate PC
+
+== Generación de Código y Emisión de Etiqueta ==
+' EL EVENTO SE DISPARA AUTOMÁTICAMENTE DESDE LA INTERFAZ
+[-> OC : generarEtiquetas(envio)
+note right of OC
+  **[Evento Automático]**
+  Luego de recibir el pagoAprobado, la interfaz
+  gráfica dispara automáticamente la 
+  generación del codigo de seguimiento y
+  de la etiqueta sin intervención del Operador.
+end note
+activate OC
+
+OC -> GE : emitirEtiqueta(envio)
+activate GE
+
+' APLICANDO EXPERTO EN INFORMACIÓN
+GE -> Envio : generarCodigoSeguimiento()
 activate Envio
-Envio -> Envio : generarCodigoSeguimiento()
-Envio --> GP : codigoSeguimiento
+Envio --> GE : codigoSeguimiento
 deactivate Envio
 
 ' EMISIÓN DE ETIQUETA APLICANDO FABRICACIÓN PURA
-GP -> GE : emitirEtiqueta(envio)
-activate GE
-
 GE -> GeneradorPDF : crearPDF(envio)
 activate GeneradorPDF
 GeneradorPDF --> GE : etiquetaPDF
 deactivate GeneradorPDF
 
-GE --> GP : etiquetaPDF
+GE --> OC : codigoSeguimiento, etiquetaPDF
 deactivate GE
 
-GP --> PC : codigoSeguimiento, etiquetaPDF
-deactivate GP
-
-PC --> Operador : mostrarInfo(codigoSeguimiento, etiquetaPDF)
-deactivate PC
+' EL SISTEMA LE MUESTRA EL RESULTADO FINAL AL OPERADOR
+OC --> Operador : mostrarInfo(codigoSeguimiento, etiquetaPDF)
+deactivate OC
 @enduml
