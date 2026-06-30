@@ -16,12 +16,13 @@ skinparam actor {
 title Diagrama de Casos de Uso
 
 ' ─── ACTORES ───────────────────────────────────────────
-actor "Cliente / Remitente" as Cliente
+actor "Remitente" as Cliente
 actor "Destinatario"        as Destinatario
 actor "Operador Logístico"  as Operador
 actor "Repartidor"          as Repartidor
 actor "Supervisor"          as Supervisor
 actor "Timer"       as Timer
+actor "Anonimo" as Anonimo  
 
 ' ─── SISTEMA ────────────────────────────────────────────
 rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
@@ -32,7 +33,7 @@ rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
   usecase "Consultar seguimiento de envío"   as UC2
 
   ' --- Ciclo logístico (Operador) ---
-  usecase "Registrar evento logístico\n(escaneo de paquete)" as UC3
+  usecase "Registrar evento logístico" as UC3
   usecase "Recepcionar paquete" as UC3a
 
   ' --- Entrega (Repartidor) ---
@@ -44,7 +45,8 @@ rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
   usecase "Generar informe de jornada"       as UC8
   usecase "Habilitar empleado" as UC9
 
-  usecase "Iniciar Sesion" as UC10
+  usecase "Cerrar Sesion" as UC10
+  usecase "Iniciar Sesion" as UC11
 }
 
 ' ─── RELACIONES ACTOR ↔ CASO DE USO ─────────────────────
@@ -66,6 +68,7 @@ Repartidor   --> UC10
 
 Timer        --> UC8
 
+Anonimo      --> UC11
 
 ' ─── RELACIONES ENTRE CASOS DE USO ──────────────────────
 UC1 ..> UC1b : <<include>>

@@ -173,7 +173,7 @@ package Controladores {
   }
 
   class PagoController {
-    + procesarPago(monto: Double): bool
+    + registrarPago(monto: Double): bool
   }
 }
 
@@ -197,7 +197,7 @@ package Gestores {
   }
   
   class GestorPago {
-    + void registrarPago(importe : double): bool
+    + void procesarPago(importe : double): bool
   }
 }
 
@@ -233,6 +233,7 @@ GestorEnvio .down.> Cliente
 GestorDistribucion .down.> Envio
 GestorDistribucion .down.> Empleado
 GestorEnvio .down.> GeneradorPdf
+GestorEnvio .down.> Tarifa
 
 ' 3. Usamos direcciones laterales (derecha/izquierda) para servicios transversales
 GestorDistribucion .right.> ServicioDeNotificacion : usa para SMS >
