@@ -43,6 +43,8 @@ rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
   ' --- Administración ---
   usecase "Generar informe de jornada"       as UC8
   usecase "Habilitar empleado" as UC9
+
+  usecase "Iniciar Sesion" as UC10
 }
 
 ' ─── RELACIONES ACTOR ↔ CASO DE USO ─────────────────────
@@ -56,9 +58,11 @@ Destinatario --> UC2
 Operador     --> UC3
 Operador     --> UC3a
 Operador     --> UC1
+Operador     --> UC10
 
 Repartidor   --> UC4
 Repartidor   --> UC5
+Repartidor   --> UC10
 
 Timer        --> UC8
 

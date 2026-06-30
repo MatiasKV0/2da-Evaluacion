@@ -1,148 +1,136 @@
 @startuml   
 title CU01 - Solicitar Envío
+
 skinparam Shadowing false 
 skinparam sequenceMessageAlign center 
 skinparam responseMessageBelowArrow true
 skinparam NoteBackgroundColor #FFF2CC
 
-participant "Operador Sucursal" as Operador
-participant "OperacionController" as OC 
-participant "PagoController" as PC
-participant "GestorEnvio" as GE 
-participant "GestorPago" as GP
+' PARTICIPANTES (Objetos Anónimos y Concretos con nombres subrayados)
+participant "<u>:OperacionController</u>" as OC
+participant "<u>:PagoController</u>" as PC 
+participant "<u>:GestorEnvio</u>" as GE 
+participant "<u>:GestorPago</u>" as GP
 
 ' MULTIOBJETOS 
-collections "zonas : Zona" as RepoZonas
-collections "envios : Envio" as RepoEnvios
-collections "pagos : Pago" as RepoPagos
+collections "<u>zonas</u> : Zona" as RepoZonas
+collections "<u>envios</u> : Envio" as RepoEnvios
+collections "<u>pagos</u> : Pago" as RepoPagos
 
-participant "Tarifa" as Tarifa 
-participant "E1:Envio" as Envio 
-participant "P1:Pago" as Pago
-participant "<<interface>>\nIProcesadorDePago" as IPago 
-participant "GeneradorDePDF" as GeneradorPDF
+participant "<u>:Tarifa</u>" as Tarifa 
 
-== Registro del envío ==
-Operador -> OC : registrarNuevoEnvio(\nremitente, destinatario,\npaquete, tipoServicio, idZona)
+participant "<u>:IProcesadorDePago</u>" as IPago 
+participant "<u>:GeneradorDePDF</u>" as GeneradorPDF
+
+' --- INICIO DEL FLUJO ---
+
 activate OC
 
-' VALIDACIONES Y NOTAS DE FLUJOS ALTERNATIVOS
-OC -> OC : validarDatos(remitente, destinatario)
-note right of OC
-  **[Flujos Alternativos A1 y A2]**
-  Si los datos del destinatario o remitente
-  son inválidos o están incompletos, el
-  sistema muestra error y se detiene el flujo.
-end note
+  OC -> GE : crearEnvio(remitente, destinatario, paquete, tipoServicio, idZona)
+  activate GE
 
-OC -> OC : validarPaquete(paquete)
-note right of OC
-  **[Flujo Alternativo A3]**
-  Si el peso o las dimensiones están fuera
-  del rango permitido, se detiene el flujo.
-end note
+      ' VALIDACIONES EN EL GESTOR
+      GE -> GE : validarDatos(remitente, destinatario)
+      note right of GE
+        **[Flujos Alternativos A1 y A2]**
+        Si los datos del destinatario o remitente
+        son inválidos o están incompletos, el
+        sistema muestra error y se detiene el flujo.
+      end note
 
-OC -> GE : crearEnvio(remitente, destinatario, paquete, tipoServicio, idZona)
-activate GE
+      GE -> GE : validarPaquete(paquete)
+      note right of GE
+        **[Flujo Alternativo A3]**
+        Si el peso o las dimensiones están fuera
+        del rango permitido, se detiene el flujo.
+      end note
 
-GE -> RepoZonas : buscarZona(idZona)
-activate RepoZonas
-RepoZonas --> GE : zona : Zona
-deactivate RepoZonas
+      GE -> RepoZonas : buscarZona(idZona)
+      activate RepoZonas
+          RepoZonas --> GE : zona : Zona
+      deactivate RepoZonas
 
-GE -> Tarifa : calcularImporte(paquete, tipoServicio, zona)
-activate Tarifa
-Tarifa --> GE : importe
-deactivate Tarifa
+      GE -> Tarifa : calcularImporte(paquete, tipoServicio, zona)
+      activate Tarifa
+          Tarifa --> GE : importe
+      deactivate Tarifa
 
-create Envio
-GE -> Envio : Envio(remitente, destinatario, paquete, tipoServicio)
-activate Envio
-GE -> Envio : asignarImporte(importe)
-Envio --> GE : envioCreado
-deactivate Envio
+      
 
-' GUARDADO DEL ENVÍO 
-GE -> RepoEnvios : agregarEnvio(Envio)
-activate RepoEnvios
-deactivate RepoEnvios
+      create participant "E1:Envio" as Envio 
+      GE -->> Envio : <<create>> Envio(remitente, destinatario, paquete, tipoServicio)
+      activate Envio
+          GE -> Envio : asignarImporte(importe)
+          Envio --> GE : envioCreado
+      deactivate Envio
 
-GE --> OC : envio, importe
-deactivate GE
+      ' GUARDADO DEL ENVÍO 
+      GE -> RepoEnvios : agregarEnvio(Envio)
+      activate RepoEnvios
+      deactivate RepoEnvios
 
-OC --> Operador : mostrarResumen(envio, importe)
+      GE --> OC : envio, importe
+  deactivate GE
 deactivate OC
 
-== Confirmación del pago (Incluye CU: Procesar Pago) ==
-' EL ACTOR AHORA INTERACTÚA CON EL CONTROLADOR DE PAGOS
-Operador -> PC : registrarPago(importe)
-activate PC
+' --- PROCESO DE PAGO ---
 
 PC -> GP : registrarPago(importe)
+activate PC
 activate GP
 
-create Pago
-GP -> Pago : crear(importe)
-activate Pago
-Pago --> GP : pago
-deactivate Pago
+    create participant "P1:Pago" as Pago
+    GP -->> Pago : <<create>> crear(importe)
+    activate Pago
+        Pago --> GP : pago
+    deactivate Pago
 
-' GUARDADO DEL PAGO 
-GP -> RepoPagos : agregarPago(Pago)
-activate RepoPagos
-deactivate RepoPagos
+    ' GUARDADO DEL PAGO 
+    GP -> RepoPagos : agregarPago(Pago)
+    activate RepoPagos
+    deactivate RepoPagos
 
-' APLICANDO POLIMORFISMO Y VARIACIONES PROTEGIDAS
-GP -> IPago : procesarPago(importe)
-activate IPago
-IPago --> GP : pagoAprobado
-deactivate IPago
+    ' APLICANDO POLIMORFISMO Y VARIACIONES PROTEGIDAS
+    GP -> IPago : procesarPago(importe)
+    activate IPago
+        IPago --> GP : pagoAprobado
+    deactivate IPago
 
-note right of GP
-  **[Flujo Alternativo A4]**
-  Si la interfaz del sistema externo rechaza
-  la transacción, se notifica al usuario para 
-  reintentar con otro medio o cancelar.
-end note
+    note right of GP
+      **[Flujo Alternativo A4]**
+      Si la interfaz del sistema externo rechaza
+      la transacción, se notifica al usuario para 
+      reintentar con otro medio o cancelar.
+    end note
 
-' EL GESTOR DE PAGO TERMINA SU RESPONSABILIDAD 
-GP --> PC : pagoAprobado
+    ' EL GESTOR DE PAGO TERMINA SU RESPONSABILIDAD 
+    GP --> PC : pagoAprobado
 deactivate GP
-
-PC --> Operador : confirmacionPagoExitoso
 deactivate PC
 
-== Generación de Código y Emisión de Etiqueta ==
-' EL EVENTO SE DISPARA AUTOMÁTICAMENTE DESDE LA INTERFAZ
-[-> OC : generarEtiquetas(envio)
-note right of OC
-  **[Evento Automático]**
-  Luego de recibir el pagoAprobado, la interfaz
-  gráfica dispara automáticamente la 
-  generación del codigo de seguimiento y
-  de la etiqueta sin intervención del Operador.
-end note
+' --- EMISIÓN DE ETIQUETA ---
+
 activate OC
 
 OC -> GE : emitirEtiqueta(envio)
 activate GE
 
-' APLICANDO EXPERTO EN INFORMACIÓN
-GE -> Envio : generarCodigoSeguimiento()
-activate Envio
-Envio --> GE : codigoSeguimiento
-deactivate Envio
+    ' APLICANDO EXPERTO EN INFORMACIÓN
+    GE -> Envio : generarCodigoSeguimiento()
+    activate Envio
+        Envio --> GE : codigoSeguimiento
+    deactivate Envio
 
-' EMISIÓN DE ETIQUETA APLICANDO FABRICACIÓN PURA
-GE -> GeneradorPDF : crearPDF(envio)
-activate GeneradorPDF
-GeneradorPDF --> GE : etiquetaPDF
-deactivate GeneradorPDF
+    ' EMISIÓN DE ETIQUETA APLICANDO FABRICACIÓN PURA
+    GE -> GeneradorPDF : crearPDF(envio)
+    activate GeneradorPDF
+        GeneradorPDF --> GE : etiquetaPDF
+    deactivate GeneradorPDF
 
-GE --> OC : codigoSeguimiento, etiquetaPDF
+    GE --> OC : codigoSeguimiento, etiquetaPDF
 deactivate GE
 
-' EL SISTEMA LE MUESTRA EL RESULTADO FINAL AL OPERADOR
-OC --> Operador : mostrarInfo(codigoSeguimiento, etiquetaPDF)
+' EL SISTEMA LE MUESTRA EL RESULTADO FINAL A LA INTERFAZ
 deactivate OC
+
 @enduml

@@ -5,11 +5,7 @@ skinparam style strictuml
 skinparam DefaultFontName "Arial"
 hide empty members
 
-package Negocio{
-  ' interface Suscripcion {
-
-  '   + esPrioritario(): Boolean
-  ' }
+package Negocio {
 
   ' --- ENTIDADES DE DOMINIO (Lógica y Estado) ---
   class Cliente {
@@ -29,13 +25,13 @@ package Negocio{
     - estadoActual: EstadoEnvio
     
     + Envio(remitente: Cliente, destinatario: Cliente, paquete: Paquete, tipo: TipoServicio)
-    + confirmarPago(pago: Pago): void
+    + confirmarPago(pago: Pago): Boolean
     + registrarEvento(estado: EstadoEnvio, empleado: Empleado, sucursal: Sucursal, desc: String): void
-    + asignarImporte(Double) : void
+    + asignarImporte(importe: Double) : Boolean
     + registrarIntentoFallido(motivo: String, empleado: Empleado, numeroIntento: Integer): IntentoEntrega
     + generarCodigoSeguimiento(): String
     + getEstadoActual(): EstadoEnvio
-    + agregarEvento(envio : Envio) : void
+    + agregarEvento(evento : EventoLogistico) : void
   }
 
   class TipoServicio{
@@ -51,8 +47,10 @@ package Negocio{
     - alto: Double
     - ancho: Double
     - largo: Double
+    - descripcion: String
     + calcularVolumen(): Double
     + getPeso(): Double
+    + esValido(): Boolean
   }
 
   class Pago {
@@ -60,24 +58,31 @@ package Negocio{
     - monto: Double
     - fechaPago: LocalDateTime
     - verificado: Boolean
-    + crear(importe : double) : void
+    + crear(importe : double) : Pago
     + agregarPago(pago : Pago)
   }
   
   interface IProcesadorDePago{
-    +procesarPago(importe : double) : Boolean
-}
+    + procesarPago(importe : double) : Boolean
+  }
 
-class TarjetaCredito{
-    -numeroTarjeta : String
-    -titular : String
-}
+  class TarjetaCredito{
+    - numeroTarjeta : String
+    - titular : String
+    + procesarPago(importe : double) : Boolean
+  }
 
-class Transferencia{
-    -cbu : String
-    -banco : String
-}
+  class Transferencia{
+    - cbu : String
+    - banco : String
+    + procesarPago(importe : double) : Boolean
+  }
 
+  class BilleteraVirtual{
+    - email : String
+    - proveedor : String
+    + procesarPago(importe : double) : Boolean
+  }
 
   abstract class Empleado {
     - legajo: String
@@ -86,11 +91,7 @@ class Transferencia{
     + getDatosOperativos(): String
     + esRolPermitido(rolRequerido: TipoEmpleado): Boolean
   }
-
-  class OperadorSucursal {
-    + registrarEnvio(): void
-    + registrarEvento(): void
-  }
+  
   class Sucursal{
     - id: Long
     - nombre: String
@@ -98,27 +99,14 @@ class Transferencia{
     + getDatosSucursal(): String
   }
 
-  class Repartidor {
-    - vehiculoAsignado: String
-    + registrarEntrega(): void
-    + entregarPaquete() : boolean
-    + registrarIntentoFallido() : void
-   }
-
-  class Supervisor {
-    + habilitarEmpleado(String legajo): void
-    + auditarEnvio(codigoSeguimiento: String): void
-+ generarReporte() : void 
-  }
-
-  class Reportes{
+  class Reporte{
     - id: Long
     - fecha: Date
+    - entregados : int
     - intentoFallidos : int
     - enTransito : int
-    - enDevolucion :int
+    - enDevolucion : int
     + generarInformeDiario(fecha: LocalDate): Reporte
-
   }
 
  class Zona {
@@ -127,9 +115,8 @@ class Transferencia{
     - codigoPostal: String
     - costoEnvio: Double
     + getCostoEnvio(): Double
-    + buscarZona(idZona) : Zona
+    + buscarZona(idZona: Long) : Zona
   }
-
 
   class Tarifa{
     - id: Long
@@ -138,26 +125,13 @@ class Transferencia{
     + calcularImporte(paquete: Paquete,tipoServicio: TipoServicio, zona : Zona ): Double
   }
 
-  class EventoLogistico 
-{
+  class EventoLogistico {
     - id: Long
     - fechaHora: LocalDateTime
     - descripcion: String
     - estadoResultante: EstadoEnvio
     + EventoLogistico(estado: EstadoEnvio, empleado: Empleado, sucursal: Sucursal, desc: String)
   }
-
-'   class SuscripcionMensual
-' {
-'     -fechaVencimiento : LocalDate
-'     -servicioPrioritario : boolean
-'     -descuento : double 
-'   }
-'   note right of SuscripcionMensual
-'     La cardinalidad 0 a 1 indica que puede o no tener
-' una suscripción. Con lo cual queda la clase anexada a cliente para un futuro
-
-'   end note
 
   class IntentoEntrega {
     - numeroIntento: Integer
@@ -166,30 +140,27 @@ class Transferencia{
     + IntentoEntrega(motivo: String, empleado: Empleado, intento: Integer)
     + determinarProximaAccion(): String
   }
-    class GeneradorPdf {
-    + crearPDF(envio: Envio): void.
+  
+  class GeneradorPdf {
+    + crearPDF(envio: Envio): String
   }
 
+  class ServicioDeNotificacion {
+    + void enviarSMS(telefono: String, mensaje: String)
+  }
 }
 
 EventoLogistico <|-- IntentoEntrega
-Empleado <|-- OperadorSucursal
-Empleado <|-- Repartidor
-Empleado <|-- Supervisor
 Pago --> IProcesadorDePago : utiliza
 TarjetaCredito ..|> IProcesadorDePago
 Transferencia ..|> IProcesadorDePago
-
-
-
+BilleteraVirtual ..|> IProcesadorDePago
 
 ' --- CAPA DE CONTROLADORES (Interfaces externas / API) ---
 package Controladores {
   class OperacionController {
     + registrarNuevoEnvio(datosRemitente: JSON, datosDestinatario: JSON, datosPaquete: JSON, tipoServicio: TipoServicio , zona: JSON): String
-    + valorDatos(remitente,destinatario) : boolean
-    + validarPaquete(paquete) : boolean
-    + generarEtiquetas(envio: Envio): void
+    + emitirEtiqueta(codigoSeguimiento: String): String
   }
 
   class LogisticaController {
@@ -203,17 +174,16 @@ package Controladores {
 
   class PagoController {
     + procesarPago(monto: Double): bool
-    + registrarPago(importe : Double) : void
   }
-
-
 }
 
 ' --- CAPA DE GESTORES (Servicios de Aplicación / Casos de Uso) ---
 package Gestores {
   class GestorEnvio {
     + String crearEnvio(remitente: Cliente, destinatario: Cliente, paquete: Paquete, tipo: TipoServicio, zona : Zona)
-    - void emitirEtiqueta(envio: Envio)
+    + String emitirEtiqueta(envio: Envio): String
+    - boolean validarDatosCliente(cliente: Cliente)
+    - boolean validarDatosPaquete(paquete: Paquete)
   }
 
   class GestorDistribucion {
@@ -222,21 +192,16 @@ package Gestores {
     - void verificarReglasDevolucion(envio: Envio, intento: IntentoEntrega)
   }
 
-  class ServicioDeNotificacion {
-    + void enviarSMS(telefono: String, mensaje: String)
-  }
-
-  class GestorReportes {
+  class GestorReporte {
     + generarCierreJornada(fecha: LocalDate): Reporte
   }
+  
   class GestorPago {
     + void registrarPago(importe : double): bool
   }
-  
 }
 
 ' --- ENUMS E INTERFACES ---
-
 enum EstadoEnvio {
   REGISTRADO
   EN_CLASIFICACION
@@ -246,12 +211,19 @@ enum EstadoEnvio {
   INTENTO_FALLIDO
   EN_DEVOLUCION
 }
+
+enum TipoEmpleado {
+  OPERADOR
+  REPARTIDOR
+  SUPERVISOR
+}
+
 ' --- DEPENDENCIAS ARQUITECTÓNICAS (Controladores -> Gestores -> Dominio) ---
 
 ' 1. Forzamos que los controladores apunten estrictamente HACIA ABAJO a los gestores
 OperacionController .down.> GestorEnvio
 LogisticaController .down.> GestorDistribucion
-ReporteController .down.> GestorReportes
+ReporteController .down.> GestorReporte
 PagoController .down.> GestorPago
 
 ' 2. Forzamos que los gestores apunten HACIA ABAJO a las entidades de dominio
@@ -262,16 +234,13 @@ GestorDistribucion .down.> Envio
 GestorDistribucion .down.> Empleado
 GestorEnvio .down.> GeneradorPdf
 
-
-
 ' 3. Usamos direcciones laterales (derecha/izquierda) para servicios transversales
 GestorDistribucion .right.> ServicioDeNotificacion : usa para SMS >
-GestorReportes .down.> Reportes
-GestorReportes .down.> Envio
+GestorReporte .down.> Reporte
+GestorReporte .down.> Envio
 
 ' --- RELACIONES ESTRUCTURALES (Entidades de Dominio) ---
 
-' Alargar las flechas (usando más guiones) ayuda a separar las entidades principales
 Envio "*" ---> "1" Cliente : remitente >
 Envio "*" ---> "1" Cliente : destinatario >
 
@@ -280,13 +249,9 @@ Envio "1" *-- "*" EventoLogistico : registra >
 Envio "*" -left- "1" Zona : corresponde >
 Envio "1" -right-> "1" Paquete : aplica >
 
-' Agrupamos la lógica de tarifas para que no se disperse por el diagrama
 Tarifa "*" .down.> "1" Zona : aplica >
 Tarifa "*" .down.> "1" TipoServicio : aplica >
 Tarifa "1" .down.> "1" Paquete : aplica >
-
-
-' SuscripcionMensual "0" -up-> "1" Cliente : perteneceA >
 
 EventoLogistico "*" --> "1" Empleado : registradoPor >
 EventoLogistico "*" --> "1" Sucursal : ocurreEn >
