@@ -1,0 +1,105 @@
+@startuml
+
+class Envio {
+    - id: Long
+    - codigoSeguimiento: String
+    - importe: Double
+    - estadoActual: EstadoEnvio
+    - pagado: Boolean
+
+    + Envio(remitente: Cliente, destinatario: Cliente, paquete: Paquete)
+    + getEstadoActual(): EstadoEnvio
+    + setCodigoSeguimiento(codigo: String): void
+    + agregarEvento(evento : EventoLogistico) : void
+    + asignarImporte(importe: Double) : Boolean
+    + esPagado(): Boolean
+    + marcarComoPagado(): void
+}
+
+class Empleado {
+    - legajo: String
+    - nombre: String
+    - zonaAsignada: String
+    + getDatosOperativos(): String
+    + esRolPermitido(rolRequerido: TipoEmpleado): Boolean
+}
+
+class Paquete {
+    - id: Long
+    - peso: Double
+    - alto: Double
+    - ancho: Double
+    - largo: Double
+    - descripcion: String
+    + Paquete(peso: Double, alto: Double, ancho: Double, largo: Double, descripcion: String)
+    + calcularVolumen(): Double
+    + getPeso(): Double
+    + esValido(): Boolean
+}
+
+class Pago {
+    - id: Long
+    - transaccionId: String
+    - metodoPago: String
+    - monto: Double
+    - fechaPago: LocalDateTime
+    - verificado: Boolean
+    + Pago(datosPago: JSON)
+    + procesarTransaccion(transaccionId: String): Boolean
+}
+
+class Cliente {
+    - id: Long
+    - dni: String
+    - nombre: String
+    - apellido: String
+    - telefono: String
+    - direccion: String
+    + cliente(dni: String, nombre: String, apellido: String, telefono: String, direccion: String)
+    + getDatosContacto(): String
+}
+
+class EventoLogistico {
+    - id: Long
+    - fechaHora: LocalDateTime
+    - descripcion: String
+    - estadoResultante: EstadoEnvio
+    + EventoLogistico(estado: EstadoEnvio, empleado: Empleado, sucursal: Sucursal, desc: String)
+}
+
+class IntentoEntrega {
+    - numeroIntento: Integer
+    - motivoFallo: String
+    - fechaLimiteRetiro: LocalDateTime
+    + IntentoEntrega(motivo: String, empleado: Empleado, intento: Integer, estado: EstadoEnvio, sucursal: Sucursal, desc: String)
+    + determinarProximaAccion(): String
+}
+
+class Zona {
+    - id: Long
+    - nombre: String
+    - codigoPostal: String
+    - costoEnvio: Double
+    + getCostoEnvio(): Double
+    + buscarZona(idZona: Long) : Zona
+}
+
+class Sucursal{
+    - id: Long
+    - nombre: String
+    - direccion: String
+    + getDatosSucursal(): String
+}
+
+EventoLogistico <|-- IntentoEntrega
+Envio "*" ---> "1" Cliente : remitente >
+Envio "*" ---> "1" Cliente : destinatario >
+
+Envio "1" o-- "0..1" Pago : abona <
+Envio "1" *-- "*" EventoLogistico : registra >
+Envio "*" -left- "1" Zona : corresponde >
+Envio "1" -right-> "1" Paquete : aplica >
+EventoLogistico "*" --> "1" Empleado : registradoPor >
+EventoLogistico "*" --> "0..1" Sucursal : ocurreEn >
+
+@enduml

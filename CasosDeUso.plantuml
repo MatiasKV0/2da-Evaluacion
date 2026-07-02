@@ -18,7 +18,7 @@ title Diagrama de Casos de Uso
 ' ─── ACTORES ───────────────────────────────────────────
 actor "Remitente" as Cliente
 actor "Destinatario"        as Destinatario
-actor "Operador Logístico"  as Operador
+actor "Operador de Sucursal"  as Operador
 actor "Repartidor"          as Repartidor
 actor "Supervisor"          as Supervisor
 actor "Timer"       as Timer
@@ -43,7 +43,6 @@ rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
 
   ' --- Administración ---
   usecase "Generar informe de jornada"       as UC8
-  usecase "Habilitar empleado" as UC9
 
   usecase "Cerrar Sesion" as UC10
   usecase "Iniciar Sesion" as UC11
@@ -51,7 +50,7 @@ rectangle "TRACEX — Sistema de Seguimiento de Envíos" {
 
 ' ─── RELACIONES ACTOR ↔ CASO DE USO ─────────────────────
 Supervisor   --|> Operador
-Supervisor   --> UC9
+Supervisor   --> UC8
 
 Cliente      --> UC2
 

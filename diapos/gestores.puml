@@ -1,0 +1,25 @@
+@startuml
+
+class GestorEnvio {
+    + String crearEnvio(remitente: Cliente, destinatario: Cliente, paquete: Paquete, tipo: TipoServicio, zona : Zona)
+    + String emitirEtiqueta(envio: Envio): String
+    + void actualizarEnvioPago(pagoAprobado: Boolean, envioId: Long)
+    - boolean validarDatosCliente(cliente: Cliente)
+    - boolean validarDatosPaquete(paquete: Paquete)
+  }
+
+  class GestorDistribucion {
+    + void actualizarEstadoPaquete(codigo: String, legajo: String, idSucursal: Long, estado: EstadoEnvio)
+    + void procesarIntentoFallido(codigo: String, legajo: String, motivo: String)
+    - void verificarReglasDevolucion(envio: Envio, intento: IntentoEntrega)
+  }
+
+  class GestorReporte {
+    + generarCierreJornada(fecha: LocalDate): Reporte
+  }
+  
+  class GestorPago {
+    + procesarPago(envioId: Long, datosPago: JSON): boolean
+  }
+
+@enduml

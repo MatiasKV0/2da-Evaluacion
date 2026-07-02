@@ -1,0 +1,40 @@
+@startuml
+
+ class OperacionController {
+    + registrarNuevoEnvio(datosRemitente: JSON, datosDestinatario: JSON, datosPaquete: JSON, tipoServicio: TipoServicio , zona: JSON): String
+    + emitirEtiqueta(codigoSeguimiento: String): String
+  }
+
+class GestorEnvio {
+    + String crearEnvio(remitente: Cliente, destinatario: Cliente, paquete: Paquete, tipo: TipoServicio, zona : Zona)
+    + String emitirEtiqueta(envio: Envio): String
+    + void actualizarEnvioPago(pagoAprobado: Boolean, envioId: Long)
+    - boolean validarDatosCliente(cliente: Cliente)
+    - boolean validarDatosPaquete(paquete: Paquete)
+  }
+
+    class GeneradorPdf {
+    + crearPDF(envio: Envio): String
+  }
+
+  class Envio {
+    - id: Long
+    - codigoSeguimiento: String
+    - importe: Double
+    - estadoActual: EstadoEnvio
+
+    + Envio(remitente: Cliente, destinatario: Cliente, paquete: Paquete, tipo: TipoServicio)
+    + confirmarPago(pago: Pago): Boolean
+    + registrarEvento(estado: EstadoEnvio, empleado: Empleado, sucursal: Sucursal, desc: String): void
+    + asignarImporte(importe: Double) : Boolean
+    + registrarIntentoFallido(motivo: String, empleado: Empleado, numeroIntento: Integer): IntentoEntrega
+    + generarCodigoSeguimiento(): String
+    + getEstadoActual(): EstadoEnvio
+    + agregarEvento(evento : EventoLogistico) : void
+}
+
+  OperacionController .down.> GestorEnvio
+  GestorEnvio .down.> GeneradorPdf
+  GestorEnvio .down.> Envio
+
+@enduml

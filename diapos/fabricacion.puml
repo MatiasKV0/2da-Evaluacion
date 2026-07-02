@@ -1,0 +1,43 @@
+
+@startuml
+
+
+  class ReporteController {
+    + generarInformeDiario(fecha: LocalDate): void
+  }
+
+  class GestorReporte {
+    + generarCierreJornada(fecha: LocalDate): Reporte
+  }
+
+  class Reporte{
+    - id: Long
+    - fecha: Date
+    - entregados : int
+    - intentoFallidos : int
+    - enTransito : int
+    - enDevolucion : int
+    + generarInformeDiario(fecha: LocalDate): Reporte
+  }
+
+    class Envio {
+    - id: Long
+    - codigoSeguimiento: String
+    - importe: Double
+    - estadoActual: EstadoEnvio
+    
+    + Envio(remitente: Cliente, destinatario: Cliente, paquete: Paquete, tipo: TipoServicio)
+    + confirmarPago(pago: Pago): Boolean
+    + registrarEvento(estado: EstadoEnvio, empleado: Empleado, sucursal: Sucursal, desc: String): void
+    + asignarImporte(importe: Double) : Boolean
+    + registrarIntentoFallido(motivo: String, empleado: Empleado, numeroIntento: Integer): IntentoEntrega
+    + generarCodigoSeguimiento(): String
+    + getEstadoActual(): EstadoEnvio
+    + agregarEvento(evento : EventoLogistico) : void
+  }
+
+  ReporteController .down.> GestorReporte
+  GestorReporte .down.> Reporte
+  GestorReporte .down.> Envio
+
+@enduml

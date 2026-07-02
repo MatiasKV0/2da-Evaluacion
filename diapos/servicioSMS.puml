@@ -1,0 +1,25 @@
+@startuml
+
+  class LogisticaController {
+    + escanearPaquete(codigoSeguimiento: String, legajoEmpleado: String, idSucursal: Long, nuevoEstado: EstadoEnvio): void
+    + reportarIntentoFallido(codigoSeguimiento: String, legajoRepartidor: String, motivo: String): void
+  }
+
+    class GestorDistribucion {
+    + void actualizarEstadoPaquete(codigo: String, legajo: String, idSucursal: Long, estado: EstadoEnvio)
+    + void procesarIntentoFallido(codigo: String, legajo: String, motivo: String)
+    - void verificarReglasDevolucion(envio: Envio, intento: IntentoEntrega)
+  }
+
+    class ServicioDeNotificacion {
+    + void enviarSMS(telefono: String, mensaje: String)
+  }
+
+  
+
+
+
+  LogisticaController .down.> GestorDistribucion
+  GestorDistribucion .down.> ServicioDeNotificacion : usa para SMS >
+
+@enduml

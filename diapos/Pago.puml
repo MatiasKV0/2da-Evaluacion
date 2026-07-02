@@ -1,0 +1,42 @@
+
+  @startuml   
+
+  class Pago {
+    - id: Long
+    - transaccionId: String
+    - metodoPago: String
+    - monto: Double
+    - fechaPago: LocalDateTime
+    - verificado: Boolean
+    + Pago(datosPago: JSON)
+    + procesarTransaccion(transaccionId: String): Boolean
+  }
+  
+  interface IProcesadorDePago{
+    + procesarPago(importe : double, datosPago : JSON ) : String
+  }
+
+  class TarjetaCredito{
+    - numeroTarjeta : String
+    - titular : String
+    + procesarPago(importe : double, datosPago : JSON ) : String
+  }
+
+  class Transferencia{
+    - cbu : String
+    - banco : String
+    + procesarPago(importe : double, datosPago : JSON ) : String
+  }
+
+  class BilleteraVirtual{
+    - email : String
+    - proveedor : String
+    + procesarPago(importe : double, datosPago : JSON ) : String
+  }
+
+Pago --> IProcesadorDePago : utiliza
+TarjetaCredito ..|> IProcesadorDePago
+Transferencia ..|> IProcesadorDePago
+BilleteraVirtual ..|> IProcesadorDePago
+
+@enduml

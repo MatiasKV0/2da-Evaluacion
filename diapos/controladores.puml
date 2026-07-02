@@ -1,0 +1,23 @@
+@startuml
+
+
+ class OperacionController {
+    + registrarNuevoEnvio(datosRemitente: JSON, datosDestinatario: JSON, datosPaquete: JSON, tipoServicio: TipoServicio , zona: JSON): String
+    + emitirEtiqueta(codigoSeguimiento: String): String
+  }
+
+  class LogisticaController {
+    + escanearPaquete(codigoSeguimiento: String, legajoEmpleado: String, idSucursal: Long, nuevoEstado: EstadoEnvio): void
+    + reportarIntentoFallido(codigoSeguimiento: String, legajoRepartidor: String, motivo: String): void
+  }
+
+  class ReporteController {
+    + generarInformeDiario(fecha: LocalDate): void
+  }
+
+  class PagoController {
+    + registrarPago(envioId: Long, datosPago: JSON): boolean
+  }
+
+
+@enduml

@@ -15,6 +15,7 @@ package Negocio {
     - apellido: String
     - telefono: String
     - direccion: String
+    + cliente(dni: String, nombre: String, apellido: String, telefono: String, direccion: String)
     + getDatosContacto(): String
   }
 
@@ -38,6 +39,7 @@ package Negocio {
     - id: Long
     - descripcion: String
     - importe: Double
+    + calcularImporte(tipo: TipoDeServicio, zona: Zona): Double
     + calcularDescuento(importeBase: Double): Double
   }
 
@@ -48,40 +50,61 @@ package Negocio {
     - ancho: Double
     - largo: Double
     - descripcion: String
+    + Paquete(peso: Double, alto: Double, ancho: Double, largo: Double, descripcion: String)
     + calcularVolumen(): Double
     + getPeso(): Double
     + esValido(): Boolean
   }
 
+  class Zona {
+    - id: Long
+    - nombre: String
+    - codigoPostal: String
+    - costoEnvio: Double
+    + getCostoEnvio(): Double
+    + buscarZona(idZona: Long) : Zona
+  }
+
+  class TipoPaquete{
+    - id: Long
+    - descripcion: String
+    - dimensionesMaximas: String
+    - pesoMaximo: Double
+    - costo: Double
+    + calcularCosto(paquete: Paquete): Double
+  }
+
   class Pago {
     - id: Long
+    - transaccionId: String
+    - metodoPago: String
     - monto: Double
     - fechaPago: LocalDateTime
     - verificado: Boolean
-    + crear(importe : double) : Pago
-    + agregarPago(pago : Pago)
+    + Pago(datosPago: JSON)
+    + procesarTransaccion(transaccionId: String): Boolean
   }
   
   interface IProcesadorDePago{
-    + procesarPago(importe : double) : Boolean
+    + procesarPago(importe : double, datosPago : JSON ) : String
   }
 
   class TarjetaCredito{
     - numeroTarjeta : String
     - titular : String
-    + procesarPago(importe : double) : Boolean
+    + procesarPago(importe : double, datosPago : JSON ) : String
   }
 
   class Transferencia{
     - cbu : String
     - banco : String
-    + procesarPago(importe : double) : Boolean
+    + procesarPago(importe : double, datosPago : JSON ) : String
   }
 
   class BilleteraVirtual{
     - email : String
     - proveedor : String
-    + procesarPago(importe : double) : Boolean
+    + procesarPago(importe : double, datosPago : JSON ) : String
   }
 
   abstract class Empleado {
@@ -109,20 +132,13 @@ package Negocio {
     + generarInformeDiario(fecha: LocalDate): Reporte
   }
 
- class Zona {
-    - id: Long
-    - nombre: String
-    - codigoPostal: String
-    - costoEnvio: Double
-    + getCostoEnvio(): Double
-    + buscarZona(idZona: Long) : Zona
-  }
+ 
 
   class Tarifa{
     - id: Long
     - descripcion: String
     - importe: Double
-    + calcularImporte(paquete: Paquete,tipoServicio: TipoServicio, zona : Zona ): Double
+    + calcularImporte(paquete: Paquete,tipoServicio: TipoServicio, idZona : Long ): Double
   }
 
   class EventoLogistico {
@@ -173,7 +189,7 @@ package Controladores {
   }
 
   class PagoController {
-    + registrarPago(monto: Double): bool
+    + registrarPago(envioId: Long, datosPago: JSON): boolean
   }
 }
 
@@ -182,6 +198,7 @@ package Gestores {
   class GestorEnvio {
     + String crearEnvio(remitente: Cliente, destinatario: Cliente, paquete: Paquete, tipo: TipoServicio, zona : Zona)
     + String emitirEtiqueta(envio: Envio): String
+    + void actualizarEnvioPago(pagoAprobado: Boolean, envioId: Long)
     - boolean validarDatosCliente(cliente: Cliente)
     - boolean validarDatosPaquete(paquete: Paquete)
   }
@@ -197,12 +214,13 @@ package Gestores {
   }
   
   class GestorPago {
-    + void procesarPago(importe : double): bool
+    + procesarPago(envioId: Long, datosPago: JSON): boolean
   }
 }
 
 ' --- ENUMS E INTERFACES ---
 enum EstadoEnvio {
+  PENDIENTE_PAGO
   REGISTRADO
   EN_CLASIFICACION
   EN_TRANSITO
@@ -218,6 +236,11 @@ enum TipoEmpleado {
   SUPERVISOR
 }
 
+enum TipoDeServicio {
+  ESTANDAR
+  URGENTE
+}
+
 ' --- DEPENDENCIAS ARQUITECTÓNICAS (Controladores -> Gestores -> Dominio) ---
 
 ' 1. Forzamos que los controladores apunten estrictamente HACIA ABAJO a los gestores
@@ -228,6 +251,7 @@ PagoController .down.> GestorPago
 
 ' 2. Forzamos que los gestores apunten HACIA ABAJO a las entidades de dominio
 GestorPago .down.> Pago
+GestorPago .down.> GestorEnvio : notificaPagoAprobado >
 GestorEnvio .down.> Envio
 GestorEnvio .down.> Cliente
 GestorDistribucion .down.> Envio
@@ -253,6 +277,8 @@ Envio "1" -right-> "1" Paquete : aplica >
 Tarifa "*" .down.> "1" Zona : aplica >
 Tarifa "*" .down.> "1" TipoServicio : aplica >
 Tarifa "1" .down.> "1" Paquete : aplica >
+Tarifa "1" .down.> "1" Envio : asigna >
+Tarifa "1" .down.> "1" TipoPaquete : asigna >
 
 EventoLogistico "*" --> "1" Empleado : registradoPor >
 EventoLogistico "*" --> "1" Sucursal : ocurreEn >

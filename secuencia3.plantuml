@@ -16,6 +16,10 @@ participant "<u>:GestorPago</u>" as GP
 collections "<u>zonas</u> : Zona" as RepoZonas
 collections "<u>envios</u> : Envio" as RepoEnvios
 collections "<u>pagos</u> : Pago" as RepoPagos
+collections "<u>clientes</u> : Cliente" as Clientes
+collections "<u>paquetes</u> : Paquete" as RepoPaquetes
+collections "<u>tipoServicio</u> : TipoServicio" as RepoTipoServicio
+collections "<u>tipoPaquete</u> : TipoPaquete" as RepoTipoPaquete
 
 participant "<u>:Tarifa</u>" as Tarifa 
 
@@ -26,11 +30,12 @@ participant "<u>:GeneradorDePDF</u>" as GeneradorPDF
 
 activate OC
 
-  OC -> GE : crearEnvio(remitente, destinatario, paquete, tipoServicio, idZona)
+  OC -> GE : crearEnvio(remitente, destinatario, paquete, tipoDeServicio, idZona)
   activate GE
 
       ' VALIDACIONES EN EL GESTOR
-      GE -> GE : validarDatos(remitente, destinatario)
+      GE -> GE : validarDatosCliente(remitente)
+      GE -> GE : validarDatosCliente(destinatario)
       note right of GE
         **[Flujos Alternativos A1 y A2]**
         Si los datos del destinatario o remitente
@@ -38,29 +43,57 @@ activate OC
         sistema muestra error y se detiene el flujo.
       end note
 
-      GE -> GE : validarPaquete(paquete)
+      GE -> GE : validarDatosPaquete(paquete)
       note right of GE
         **[Flujo Alternativo A3]**
         Si el peso o las dimensiones están fuera
         del rango permitido, se detiene el flujo.
       end note
 
-      GE -> RepoZonas : buscarZona(idZona)
-      activate RepoZonas
-          RepoZonas --> GE : zona : Zona
-      deactivate RepoZonas
 
-      GE -> Tarifa : calcularImporte(paquete, tipoServicio, zona)
-      activate Tarifa
-          Tarifa --> GE : importe
-      deactivate Tarifa
-
-      
-
-      create participant "E1:Envio" as Envio 
-      GE -->> Envio : <<create>> Envio(remitente, destinatario, paquete, tipoServicio)
+      create participant "envio:Envio" as Envio 
+      GE -->> Envio : <<create>> Envio(remitente, destinatario, paquete)
       activate Envio
-          GE -> Envio : asignarImporte(importe)
+          
+          ' El envio crea y guarda los objetos requeridos
+          create participant "Remitente:Cliente" as Remitente
+          Envio -->> Remitente : <<create>> cliente(remitente)
+          Envio -> Clientes : agregarCliente(Remitente)
+          activate Clientes
+          deactivate Clientes
+          
+          create participant "Destinatario:Cliente" as Destinatario
+          Envio -->> Destinatario : <<create>> cliente(destinatario)
+          Envio -> Clientes : agregarCliente(Destinatario)
+          activate Clientes
+          deactivate Clientes
+          
+          create participant "Paq:Paquete" as Paq
+          Envio -->> Paq : <<create>> Paquete(paquete)
+          Envio -> RepoPaquetes : agregarPaquete(Paq)
+          activate RepoPaquetes
+          deactivate RepoPaquetes
+
+          GE -> Tarifa : calcularImporte(paquete, tipoDeServicio, Idzona)
+          activate Tarifa
+          Tarifa -> RepoZonas : buscarZona(idZona)
+          activate RepoZonas
+          RepoZonas --> Tarifa : zona
+          deactivate RepoZonas
+
+            Tarifa -> RepoTipoServicio : calcularImporte(tipoDeServicio, zona)
+            activate RepoTipoServicio
+            RepoTipoServicio --> Tarifa : importeServicio
+            deactivate RepoTipoServicio
+
+            Tarifa-> RepoTipoPaquete : calcularCosto(paquete)
+            activate RepoTipoPaquete
+            RepoTipoPaquete --> Tarifa : importePaquete
+            deactivate RepoTipoPaquete
+
+          Tarifa -> Envio : asignarImporte(importe)
+          deactivate Tarifa
+
           Envio --> GE : envioCreado
       deactivate Envio
 
@@ -75,25 +108,20 @@ deactivate OC
 
 ' --- PROCESO DE PAGO ---
 
-PC -> GP : registrarPago(importe)
+PC -> GP : registrarPago(envioId, datosPago)
 activate PC
 activate GP
 
     create participant "P1:Pago" as Pago
-    GP -->> Pago : <<create>> crear(importe)
+    GP -->> Pago : <<create>> crear(datosPago)
     activate Pago
-        Pago --> GP : pago
+        Pago --> GP : Pago
     deactivate Pago
 
-    ' GUARDADO DEL PAGO 
-    GP -> RepoPagos : agregarPago(Pago)
-    activate RepoPagos
-    deactivate RepoPagos
-
     ' APLICANDO POLIMORFISMO Y VARIACIONES PROTEGIDAS
-    GP -> IPago : procesarPago(importe)
+    GP -> IPago : procesarPago(importe, datosPago)
     activate IPago
-        IPago --> GP : pagoAprobado
+        IPago --> GP : transaccionId
     deactivate IPago
 
     note right of GP
@@ -102,6 +130,29 @@ activate GP
       la transacción, se notifica al usuario para 
       reintentar con otro medio o cancelar.
     end note
+
+    GP -> Pago : procesarTransaccion(transaccionId)
+    activate Pago
+        Pago --> GP : pagoAprobado
+    deactivate Pago
+
+    ' GUARDADO DEL PAGO 
+    GP -> RepoPagos : agregarPago(Pago)
+    activate RepoPagos
+    deactivate RepoPagos
+
+    ' ACTUALIZACIÓN DEL ENVÍO DESPUÉS DEL PAGO
+    GP -> GE : actualizarEnvioPago(pagoAprobado, envioId)
+    activate GE
+        GE -> Envio : actualizarEstado(pagoAprobado)    
+        activate Envio
+        Envio --> GE : Envio
+        deactivate Envio
+
+        GE -> RepoEnvios : actualizarEnvio(Envio)
+        activate RepoEnvios
+        deactivate RepoEnvios
+    deactivate GE
 
     ' EL GESTOR DE PAGO TERMINA SU RESPONSABILIDAD 
     GP --> PC : pagoAprobado
